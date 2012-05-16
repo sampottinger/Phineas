@@ -4,7 +4,7 @@ package org.phineas.core;
  * Interface for entities that respond being clicked on
  * @author Sam Pottinger
  */
-public interface PhineasClickListener extends Boundable
+public interface PhineasClickListener extends PhineasBoundable
 {
 	
 	/**

@@ -4,20 +4,21 @@ import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
-import org.phineas.core.Boundable;
-import org.phineas.core.Drawable;
-import org.phineas.core.Placeable;
+import org.phineas.core.PhineasBoundable;
+import org.phineas.core.PhineasDrawable;
+import org.phineas.core.PhineasPlaceable;
 
 /**
  * Simple generic rectangle
  * @author Sam Pottinger
  */
-public class PhineasRectangle extends Drawable implements Boundable, Placeable
+public class PhineasRectangle implements PhineasBoundable, PhineasPlaceable, PhineasDrawable
 {
 	int x;
 	int y;
 	int width;
 	int height;
+	int depth;
 	AlphaComposite alpha;
 	AlphaComposite opaqueAlpha;
 	Color color;
@@ -39,26 +40,29 @@ public class PhineasRectangle extends Drawable implements Boundable, Placeable
 		color = newColor;
 		opaqueAlpha = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1);
 		alpha = opaqueAlpha;
+		depth = PhineasDrawable.DEFAULT_DEPTH;
 	}
 	
 	/**
-	 * Create a new rectangle
+	 * Create a new opaque rectangle
 	 * @param newX The x (horizontal) position of the rectangle
 	 * @param newY The y (vertical) position of the rectangle
 	 * @param newWidth The width of the rectangle in pixels
 	 * @param newHeight The height of the rectangle in pixels
 	 * @param newColor The color of the new rectangle
-	 * @param newAlpha The alpha value to use for this rectangle
+	 * @param newDepth The numerical drawing depth to assign to this rectangle
+	 *                 to determine its relative drawing order
 	 */
-	public PhineasRectangle(int newX, int newY, int newWidth, int newHeight, Color newColor, float newAlpha)
+	public PhineasRectangle(int newX, int newY, int newWidth, int newHeight, Color newColor, int newDepth)
 	{
 		x = newX;
 		y = newY;
 		width = newWidth;
 		height = newHeight;
 		color = newColor;
-		alpha = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, newAlpha);
 		opaqueAlpha = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1);
+		alpha = opaqueAlpha;
+		depth = newDepth;
 	}
 	
 	/**
@@ -74,10 +78,10 @@ public class PhineasRectangle extends Drawable implements Boundable, Placeable
 	 * Set a new alpha level for this rectangle
 	 * @param newAlpha Thew new alpha level for this rectangle
 	 */
-	public void setAlpha(float newAlpha)
+	/*public void setAlpha(float newAlpha)
 	{
 		alpha = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, newAlpha);
-	}
+	}*/
 	
 	@Override
 	public void setX(int newX)
@@ -122,6 +126,12 @@ public class PhineasRectangle extends Drawable implements Boundable, Placeable
 		target.setComposite(alpha);
 		target.fillRect(x, y, width, height);
 		target.setComposite(opaqueAlpha);
+	}
+
+	@Override
+	public int getDepth() 
+	{
+		return depth;
 	}
 
 }

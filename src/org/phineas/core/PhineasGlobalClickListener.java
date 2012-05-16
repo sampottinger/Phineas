@@ -5,7 +5,7 @@ package org.phineas.core;
  * the game (clicks not necessarily on themselves)
  * @author Sam Pottinger
  */
-public interface PhineasGlobalClickListener extends Boundable
+public interface PhineasGlobalClickListener extends PhineasBoundable
 {
 	
 	/**

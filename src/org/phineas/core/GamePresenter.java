@@ -6,6 +6,8 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
@@ -13,7 +15,8 @@ import java.awt.event.WindowListener;
  * Controller / presenter for GameLoopManager that simplifies game loop management and the step event
  * @author Sam Pottinger
  */
-public class GamePresenter implements StepListener, WindowListener, KeyListener, MouseListener, MouseMotionListener
+class GamePresenter implements PhineasStepListener, WindowListener, KeyListener, MouseListener, 
+MouseMotionListener, MouseWheelListener
 {	
 	private static GamePresenter instance = null;
 	
@@ -36,7 +39,7 @@ public class GamePresenter implements StepListener, WindowListener, KeyListener,
 	private GamePresenter()
 	{
 		loopManager = new GameLoopManager();
-		gameView = new GameView(this, this, this, this);
+		gameView = new GameView(this, this, this, this, this);
 	}
 
 	/**
@@ -87,19 +90,19 @@ public class GamePresenter implements StepListener, WindowListener, KeyListener,
 	public void onStep(long milliseconds)
 	{
 		Graphics2D graphics = null;
-		Iterable<Drawable> drawables;
+		Iterable<PhineasDrawable> drawables;
 		
 		GameModelManager gameModelManager = GameModelManager.getInstance();
 		
 		// Update those that are listening for the step event
-		for(StepListener listener : gameModelManager.getStepListeners())
+		for(PhineasStepListener listener : gameModelManager.getStepListeners())
 			listener.onStep(milliseconds);
 		
 		// Draw entities
 		graphics = gameView.checkoutGraphics();
 		if (graphics == null) return;
 		drawables = gameModelManager.getDrawables();
-		for(Drawable drawable : drawables)
+		for(PhineasDrawable drawable : drawables)
 			drawable.draw(graphics);
 		gameView.checkinGraphics(graphics);
 	}
@@ -258,6 +261,13 @@ public class GamePresenter implements StepListener, WindowListener, KeyListener,
 	public void setFPS(int newFPS)
 	{
 		loopManager.setFPS(newFPS);
+	}
+
+	@Override
+	public void mouseWheelMoved(MouseWheelEvent e)
+	{
+		for(PhineasScrollWheelListener listener : GameModelManager.getInstance().getMouseScrollListeners())
+			listener.onWheelMove(e.getWheelRotation());
 	}
 
 }

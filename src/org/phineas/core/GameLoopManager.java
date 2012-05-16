@@ -4,7 +4,7 @@ package org.phineas.core;
  * Singleton manager that simplifies the game loop for Phineas projects
  * @author Sam Pottinger
  */
-public class GameLoopManager
+class GameLoopManager
 {
 	private static final int DEFAULT_FPS = 40;
 	private static final float MILLISECONDS_PER_SECOND = 1000;
@@ -13,7 +13,7 @@ public class GameLoopManager
 	private boolean loopShouldBeRunning;
 	private long lastLoopTime;
 	private long targetFPS;
-	private StepListener stepListener;
+	private PhineasStepListener stepListener;
 	
 	/**
 	 * Private constructor for this singleton
@@ -39,7 +39,7 @@ public class GameLoopManager
 	 * @param newStepListener The listener to inform that a step occurred
 	 * @return true if loop started, false if it was already running
 	 */
-	public boolean startLoop(StepListener newStepListener)
+	public boolean startLoop(PhineasStepListener newStepListener)
 	{
 		// Make sure loop is not already running
 		if(loopRunning)

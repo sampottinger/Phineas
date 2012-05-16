@@ -4,15 +4,15 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.io.IOException;
 
-import org.phineas.core.Boundable;
-import org.phineas.core.Drawable;
-import org.phineas.core.Placeable;
+import org.phineas.core.PhineasBoundable;
+import org.phineas.core.PhineasDrawable;
+import org.phineas.core.PhineasPlaceable;
 
 /**
  * Simple 2D drawable image that can be used in Phineas
  * @author Sam Pottinger
  */
-public class PhineasSprite extends Drawable implements Boundable, Placeable
+public class PhineasSprite implements PhineasBoundable, PhineasPlaceable, PhineasDrawable
 {
 	private Image image;
 	private int depth;
@@ -32,7 +32,7 @@ public class PhineasSprite extends Drawable implements Boundable, Placeable
 		image = PhineasSpriteLoader.getInstance().loadSprite(loc);
 		imageWidth = image.getWidth(null);
 		imageHeight = image.getHeight(null);
-		depth = Drawable.DEFAULT_DEPTH;
+		depth = PhineasDrawable.DEFAULT_DEPTH;
 		x = newX;
 		y = newY;
 	}
@@ -59,7 +59,7 @@ public class PhineasSprite extends Drawable implements Boundable, Placeable
 	public PhineasSprite(int newX, int newY, Image newImage)
 	{
 		image = newImage;
-		depth = Drawable.DEFAULT_DEPTH;
+		depth = PhineasDrawable.DEFAULT_DEPTH;
 		x = newX;
 		y = newY;
 	}

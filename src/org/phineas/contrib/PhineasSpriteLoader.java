@@ -18,7 +18,7 @@ import javax.imageio.ImageIO;
  * sprites from URLs
  * @author Sam Pottinger
  */
-public class PhineasSpriteLoader
+class PhineasSpriteLoader
 {
 	private static PhineasSpriteLoader instance = null;
 	

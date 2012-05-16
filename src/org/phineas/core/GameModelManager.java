@@ -1,26 +1,26 @@
 package org.phineas.core;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
-import java.util.TreeSet;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Manager for data regarding a Phineas project
  * @author Sam Pottinger
  */
-public class GameModelManager
+class GameModelManager
 {
 	private static GameModelManager instance = null;
 	
-	private Collection<Drawable> drawables;
-	private Collection<StepListener> stepListeners;
+	private Collection<DepthComparedDrawableDecorator> drawables;
+	private Collection<PhineasStepListener> stepListeners;
 	private Collection<PhineasKeyListener> keyListeners;
 	private Collection<PhineasHoverListenerNanny> hoverListeners;
 	private Collection<PhineasClickListener> clickListeners;
 	private Collection<PhineasGlobalClickListener> globalClickListeners;
 	private Collection<PhineasGlobalMouseMovementListener> globalMouseMovementListeners;
+	private Collection<PhineasScrollWheelListener> mouseScrollListeners;
 
 	/**
 	 * Gets a shared instance of GameModelManager
@@ -38,40 +38,76 @@ public class GameModelManager
 	 */
 	private GameModelManager()
 	{
-		drawables = Collections.synchronizedSortedSet(new TreeSet<Drawable>());
-		stepListeners = Collections.synchronizedList(new ArrayList<StepListener>());
-		keyListeners = Collections.synchronizedList(new ArrayList<PhineasKeyListener>());
-		hoverListeners = Collections.synchronizedList(new ArrayList<PhineasHoverListenerNanny>());
-		clickListeners = Collections.synchronizedList(new ArrayList<PhineasClickListener>());
-		globalClickListeners = Collections.synchronizedList(new ArrayList<PhineasGlobalClickListener>());
-		globalMouseMovementListeners = Collections.synchronizedList(new ArrayList<PhineasGlobalMouseMovementListener>());
+		drawables = new ConcurrentSkipListSet<DepthComparedDrawableDecorator>();
+		stepListeners = new CopyOnWriteArrayList<PhineasStepListener>();
+		keyListeners = new CopyOnWriteArrayList<PhineasKeyListener>();
+		hoverListeners = new CopyOnWriteArrayList<PhineasHoverListenerNanny>();
+		clickListeners = new CopyOnWriteArrayList<PhineasClickListener>();
+		globalClickListeners = new CopyOnWriteArrayList<PhineasGlobalClickListener>();
+		globalMouseMovementListeners = new CopyOnWriteArrayList<PhineasGlobalMouseMovementListener>();
+		mouseScrollListeners = new CopyOnWriteArrayList<PhineasScrollWheelListener>();
 	}
 
 	/**
 	 * Adds a new drawable entity to this game
 	 * @param drawable The entity to add to this game
 	 */
-	public void addDrawable(Drawable drawable)
+	public void addDrawable(PhineasDrawable drawable)
 	{
-		drawables.add(drawable);
+		drawables.add(new DepthComparedDrawableDecorator(drawable));
 	}
 
 	/**
 	 * Remove the given drawable entity from this game
-	 * @param drawable The entity to have this game no longer draw
+	 * @param drawableToDelete The entity to have this game no longer draw
 	 */
-	public void removeDrawable(Drawable drawable)
+	public void removeDrawable(PhineasDrawable drawableToDelete)
 	{
-		drawables.remove(drawable);
+		Iterator<DepthComparedDrawableDecorator> itr = drawables.iterator();
+		while(itr.hasNext())
+			if(itr.next().getInnerDrawable() == drawableToDelete)
+				itr.remove();
 	}
 	
 	/**
 	 * Gets access to all of the drawable entities that this game is managing
 	 * @return Iterable over all of the drawable objects this game is managing
 	 */
-	public Iterable<Drawable> getDrawables()
+	public Iterable<PhineasDrawable> getDrawables()
 	{
-		return drawables;
+		// TODO: This is pretty darn messy and should move to another class
+		return new Iterable<PhineasDrawable>()
+		{
+
+			@Override
+			public Iterator<PhineasDrawable> iterator()
+			{
+				final Iterator<DepthComparedDrawableDecorator> nativeItr = drawables.iterator();
+				return new Iterator<PhineasDrawable>()
+				{
+
+					@Override
+					public boolean hasNext()
+					{
+						return nativeItr.hasNext();
+					}
+
+					@Override
+					public PhineasDrawable next()
+					{
+						return nativeItr.next();
+					}
+
+					@Override
+					public void remove()
+					{
+						nativeItr.remove();
+					}
+					
+				};
+			}
+	
+		};
 	}
 	
 	/**
@@ -79,7 +115,7 @@ public class GameModelManager
 	 * iteration of the game loop
 	 * @param newListener The listener to attach to this game
 	 */
-	public void attachStepListener(StepListener newListener)
+	public void attachStepListener(PhineasStepListener newListener)
 	{
 		stepListeners.add(newListener);
 	}
@@ -90,7 +126,7 @@ public class GameModelManager
 	 * game loop
 	 * @param targetListener The listener to detach from this game
 	 */
-	public void detachStepListener(StepListener targetListener)
+	public void detachStepListener(PhineasStepListener targetListener)
 	{
 		stepListeners.remove(targetListener);
 	}
@@ -100,7 +136,7 @@ public class GameModelManager
 	 * @return Iterable over the objects that have subscribed to this game's
 	 *         step event
 	 */
-	public Iterable<StepListener> getStepListeners()
+	public Iterable<PhineasStepListener> getStepListeners()
 	{
 		return stepListeners;
 	}
@@ -148,11 +184,14 @@ public class GameModelManager
 	 */
 	public void detachHoverListener(PhineasHoverListener targetListener) 
 	{
+		PhineasHoverListenerNanny currentDecorator;
+		
 		Iterator<PhineasHoverListenerNanny> decoratedListeners = hoverListeners.iterator();
 		while(decoratedListeners.hasNext())
 		{
-			if(decoratedListeners.next().getInnerListener() == targetListener)
-				decoratedListeners.remove();
+			currentDecorator = decoratedListeners.next();
+			if(currentDecorator.getInnerListener() == targetListener)
+				hoverListeners.remove(currentDecorator);
 		}
 	}
 	
@@ -289,5 +328,33 @@ public class GameModelManager
 	public Iterable<PhineasGlobalMouseMovementListener> getGlobalMouseMovementListeners()
 	{
 		return globalMouseMovementListeners;
+	}
+	
+	/**
+	 * Adds a new mouse scroll listener to this game
+	 * @param targetListener The listener to add to the game
+	 */
+	public void attachMouseScrollListener(PhineasScrollWheelListener targetListener)
+	{
+		mouseScrollListeners.add(targetListener);
+	}
+	
+	/**
+	 * Detaches an existing mouse scroll listener from this game
+	 * @param targetListener The listener to remove from this game
+	 */
+	public void detachMouseScrollListener(PhineasScrollWheelListener targetListener)
+	{
+		mouseScrollListeners.remove(targetListener);
+	}
+
+	/**
+	 * Get an iterable over all of the objects listeneing to global mouse
+	 * scrollwheel rotations
+	 * @return
+	 */
+	public Iterable<PhineasScrollWheelListener> getMouseScrollListeners() 
+	{
+		return mouseScrollListeners;
 	}
 }

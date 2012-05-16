@@ -7,6 +7,7 @@ import java.awt.Point;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelListener;
 import java.awt.event.WindowListener;
 
 import javax.swing.JFrame;
@@ -16,7 +17,7 @@ import javax.swing.SwingUtilities;
  * Facade for GUI elements for Phineas game
  * @author Sam Pottinger
  */
-public class GameView {
+class GameView {
 	
 	private static final int GAME_HORIZONTAL_OFFSET = 0;
 	private static final int GAME_VERTICAL_OFFSET = 0;
@@ -26,7 +27,7 @@ public class GameView {
 	
 	private JFrame window;
 	private Container gameContainer;
-	private PhineasCanvas canvas;
+	private GameCanvas canvas;
 	
 	/**
 	 * Creates a new window for a game
@@ -35,7 +36,7 @@ public class GameView {
 	 * @param moustListener The listener that will respond to this window's click events
 	 */
 	public GameView(WindowListener eventListener, KeyListener keyListener, MouseListener mouseListener, 
-			MouseMotionListener mouseMotionListener)
+			MouseMotionListener mouseMotionListener, MouseWheelListener mouseWheelListener)
 	{
 		// Native integration
 		// take the menu bar off the jframe
@@ -54,16 +55,19 @@ public class GameView {
 		// Add key listener
 		window.addKeyListener(keyListener);
 		
+		// Add mouse wheel listener
+		window.addMouseWheelListener(mouseWheelListener);
+		
 		// Extract and configure surface for drawing
 		gameContainer = window.getContentPane();
 		gameContainer.setPreferredSize(new Dimension(GAME_WIDTH, GAME_HEIGHT));
 		gameContainer.setLayout(null);
-		gameContainer.addMouseListener(mouseListener);
 		
 		// Add canvas and establish layout
-		canvas = new PhineasCanvas(GAME_WIDTH, GAME_HEIGHT, GAME_HORIZONTAL_OFFSET, GAME_VERTICAL_OFFSET);
+		canvas = new GameCanvas(GAME_WIDTH, GAME_HEIGHT, GAME_HORIZONTAL_OFFSET, GAME_VERTICAL_OFFSET);
 		canvas.addMouseListener(mouseListener);
 		canvas.addMouseMotionListener(mouseMotionListener);
+		canvas.addMouseWheelListener(mouseWheelListener);
 		window.add(canvas);
 		window.pack();
 		

@@ -5,7 +5,7 @@ package org.phineas.core;
  * for boundable objects
  * @author Sam Pottinger
  */
-public class BoundableHelper {
+class BoundableHelper {
 	
 	private static BoundableHelper instance = null;
 	
@@ -23,7 +23,7 @@ public class BoundableHelper {
 	private BoundableHelper()
 	{}
 	
-	public boolean isInBounds(Boundable target, int x, int y)
+	public boolean isInBounds(PhineasBoundable target, int x, int y)
 	{
 		int leftX;
 		int rightX;

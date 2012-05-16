@@ -1,6 +1,6 @@
 package org.phineas.core;
 
-public class PhineasHoverListenerNanny implements Boundable
+public class PhineasHoverListenerNanny implements PhineasBoundable
 {
 	
 	PhineasHoverListener target;

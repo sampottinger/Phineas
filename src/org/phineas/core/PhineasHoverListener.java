@@ -4,7 +4,7 @@ package org.phineas.core;
  * Interface for bounded regions looking for mouse hover events
  * @author Sam Pottinger
  */
-public interface PhineasHoverListener extends Boundable
+public interface PhineasHoverListener extends PhineasBoundable
 {	
 	/**
 	 * Method that will be called when the mouse enters
