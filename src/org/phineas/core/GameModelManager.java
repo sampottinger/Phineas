@@ -1,9 +1,11 @@
 package org.phineas.core;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.TreeSet;
+import java.util.concurrent.Semaphore;
 
 /**
  * Manager for data regarding a Phineas project
@@ -21,6 +23,10 @@ class GameModelManager
 	private Collection<PhineasGlobalClickListener> globalClickListeners;
 	private Collection<PhineasGlobalMouseMovementListener> globalMouseMovementListeners;
 	private Collection<PhineasScrollWheelListener> mouseScrollListeners;
+	
+	// TODO: Concurrency with regards to iterators should be more strongly enforced
+	//       ... calling remove on them is just going to be a problem
+	private Semaphore iteratorSemaphore = new Semaphore(1, true);
 
 	/**
 	 * Gets a shared instance of GameModelManager
@@ -38,14 +44,40 @@ class GameModelManager
 	 */
 	private GameModelManager()
 	{
-		drawables = new ConcurrentSkipListSet<DepthComparedDrawableDecorator>();
-		stepListeners = new CopyOnWriteArrayList<PhineasStepListener>();
-		keyListeners = new CopyOnWriteArrayList<PhineasKeyListener>();
-		hoverListeners = new CopyOnWriteArrayList<PhineasHoverListenerNanny>();
-		clickListeners = new CopyOnWriteArrayList<PhineasClickListener>();
-		globalClickListeners = new CopyOnWriteArrayList<PhineasGlobalClickListener>();
-		globalMouseMovementListeners = new CopyOnWriteArrayList<PhineasGlobalMouseMovementListener>();
-		mouseScrollListeners = new CopyOnWriteArrayList<PhineasScrollWheelListener>();
+		drawables = Collections.synchronizedSortedSet(new TreeSet<DepthComparedDrawableDecorator>());
+		stepListeners = Collections.synchronizedList(new ArrayList<PhineasStepListener>());
+		keyListeners = Collections.synchronizedList(new ArrayList<PhineasKeyListener>());
+		hoverListeners = Collections.synchronizedList(new ArrayList<PhineasHoverListenerNanny>());
+		clickListeners = Collections.synchronizedList(new ArrayList<PhineasClickListener>());
+		globalClickListeners = Collections.synchronizedList(new ArrayList<PhineasGlobalClickListener>());
+		globalMouseMovementListeners = Collections.synchronizedList(new ArrayList<PhineasGlobalMouseMovementListener>());
+		mouseScrollListeners = Collections.synchronizedList(new ArrayList<PhineasScrollWheelListener>());
+	}
+	
+	/**
+	 * Prevent any iterators from going to client code
+	 */
+	public void lockIterators()
+	{
+		iteratorSemaphore.acquireUninterruptibly();
+	}
+	
+	/**
+	 * Allow iterators to start going to client code again
+	 */
+	public void unlockIterators()
+	{
+		iteratorSemaphore.release();
+	}
+	
+	/**
+	 * Wait for iterators to be allowed to go to client code again
+	 */
+	public void waitForUnlockedIterators()
+	{
+		// TODO: More efficient way of doing this?
+		iteratorSemaphore.acquireUninterruptibly();
+		iteratorSemaphore.release();
 	}
 
 	/**
@@ -63,10 +95,15 @@ class GameModelManager
 	 */
 	public void removeDrawable(PhineasDrawable drawableToDelete)
 	{
-		Iterator<DepthComparedDrawableDecorator> itr = drawables.iterator();
-		while(itr.hasNext())
-			if(itr.next().getInnerDrawable() == drawableToDelete)
-				itr.remove();
+		synchronized(drawables)
+		{
+			Iterator<PhineasDrawable> itr = getDrawablesUnsafe().iterator();
+			while(itr.hasNext())
+			{
+				if(itr.next().equals(drawableToDelete))
+					itr.remove();
+			}
+		}
 	}
 	
 	/**
@@ -74,6 +111,17 @@ class GameModelManager
 	 * @return Iterable over all of the drawable objects this game is managing
 	 */
 	public Iterable<PhineasDrawable> getDrawables()
+	{
+		waitForUnlockedIterators();
+		return getDrawablesUnsafe();
+	}
+	
+	/**
+	 * Gets access to all of the drawable entities that this game is managing
+	 * without checking the iteratorSemaphore
+	 * @return Iterable over all of the drawable objects this game is managing
+	 */
+	private Iterable<PhineasDrawable> getDrawablesUnsafe()
 	{
 		// TODO: This is pretty darn messy and should move to another class
 		return new Iterable<PhineasDrawable>()
@@ -95,7 +143,7 @@ class GameModelManager
 					@Override
 					public PhineasDrawable next()
 					{
-						return nativeItr.next();
+						return nativeItr.next().getInnerDrawable();
 					}
 
 					@Override
@@ -138,6 +186,7 @@ class GameModelManager
 	 */
 	public Iterable<PhineasStepListener> getStepListeners()
 	{
+		waitForUnlockedIterators();
 		return stepListeners;
 	}
 	
@@ -166,6 +215,7 @@ class GameModelManager
 	 */
 	public Iterable<PhineasKeyListener> getKeyListeners()
 	{
+		waitForUnlockedIterators();
 		return keyListeners;
 	}
 
@@ -183,15 +233,15 @@ class GameModelManager
 	 * @param targetListener the listener to remove from this game
 	 */
 	public void detachHoverListener(PhineasHoverListener targetListener) 
-	{
-		PhineasHoverListenerNanny currentDecorator;
-		
-		Iterator<PhineasHoverListenerNanny> decoratedListeners = hoverListeners.iterator();
-		while(decoratedListeners.hasNext())
+	{	
+		synchronized(hoverListeners)
 		{
-			currentDecorator = decoratedListeners.next();
-			if(currentDecorator.getInnerListener() == targetListener)
-				hoverListeners.remove(currentDecorator);
+			Iterator<PhineasHoverListener> listeners = getHoverListenersUnsafe().iterator();
+			while(listeners.hasNext())
+			{
+				if(listeners.next().equals(targetListener))
+					listeners.remove();
+			}
 		}
 	}
 	
@@ -202,6 +252,19 @@ class GameModelManager
 	 *         events
 	 */
 	public Iterable<PhineasHoverListener> getHoverListeners()
+	{
+		waitForUnlockedIterators();
+		return getHoverListenersUnsafe();
+	}
+	
+	/**
+	 * Get all of the hover listeners registered for this game without
+	 * checking the iterator lock
+	 * @return Iterable over the objects that have subscribed to
+	 *         the games mouse movements, specifically for hover
+	 *         events
+	 */
+	private Iterable<PhineasHoverListener> getHoverListenersUnsafe()
 	{
 		
 		return new Iterable<PhineasHoverListener>()
@@ -271,6 +334,7 @@ class GameModelManager
 	 */
 	public Iterable<PhineasClickListener> getClickListeners()
 	{
+		waitForUnlockedIterators();
 		return clickListeners;
 	}
 	
@@ -299,6 +363,7 @@ class GameModelManager
 	 */
 	public Iterable<PhineasGlobalClickListener> getGlobalClickListeners()
 	{
+		waitForUnlockedIterators();
 		return globalClickListeners;
 	}
 	
@@ -327,6 +392,7 @@ class GameModelManager
 	 */
 	public Iterable<PhineasGlobalMouseMovementListener> getGlobalMouseMovementListeners()
 	{
+		waitForUnlockedIterators();
 		return globalMouseMovementListeners;
 	}
 	
@@ -355,6 +421,7 @@ class GameModelManager
 	 */
 	public Iterable<PhineasScrollWheelListener> getMouseScrollListeners() 
 	{
+		waitForUnlockedIterators();
 		return mouseScrollListeners;
 	}
 }

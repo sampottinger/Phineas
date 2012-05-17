@@ -8,7 +8,7 @@ import java.awt.Graphics2D;
  */
 public interface PhineasDrawable
 {
-	public static int DEFAULT_DEPTH = 0;
+	public static final int DEFAULT_DEPTH = 0;
 
 	/**
 	 * Draws this object to the given Graphics2D context

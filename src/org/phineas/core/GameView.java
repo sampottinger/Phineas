@@ -28,6 +28,8 @@ class GameView {
 	private JFrame window;
 	private Container gameContainer;
 	private GameCanvas canvas;
+	private int width;
+	private int height;
 	
 	/**
 	 * Creates a new window for a game
@@ -73,6 +75,10 @@ class GameView {
 		
 		// Do not let user resize
 		window.setResizable(false);
+		
+		// Save width and height
+		width = GAME_WIDTH;
+		height = GAME_HEIGHT;
 		
 		// Setup canvas
 		canvas.setUp();
@@ -132,6 +138,9 @@ class GameView {
 		canvas.setDimensions(newWidth, newHeight);
 		window.invalidate();
 		window.setSize(newWidth, newHeight);
+		
+		width = newWidth;
+		height = newHeight;
 	}
 
 	/**
@@ -141,5 +150,23 @@ class GameView {
 	public void convertPointFromScreen(Point location)
 	{
 		SwingUtilities.convertPointFromScreen(location, window.getComponent(0));
+	}
+	
+	/**
+	 * Get the height of the window
+	 * @return Vertical size of window in pixels
+	 */
+	public int getWidth()
+	{
+		return width;
+	}
+	
+	/**
+	 * Get the width of the window
+	 * @return Horizontal size of window in pixels
+	 */
+	public int getHeight()
+	{
+		return height;
 	}
 }

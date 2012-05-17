@@ -22,6 +22,8 @@ MouseMotionListener, MouseWheelListener
 	
 	private GameLoopManager loopManager;
 	private GameView gameView;
+	
+	
 
 	/**
 	 * Gets a shared instance of GamePresenter
@@ -94,16 +96,22 @@ MouseMotionListener, MouseWheelListener
 		
 		GameModelManager gameModelManager = GameModelManager.getInstance();
 		
+		GameEntityActionStager.getInstance().completeAllStagedActions(gameModelManager);
+		
 		// Update those that are listening for the step event
 		for(PhineasStepListener listener : gameModelManager.getStepListeners())
 			listener.onStep(milliseconds);
 		
-		// Draw entities
+		// Safely check out graphics
 		graphics = gameView.checkoutGraphics();
 		if (graphics == null) return;
+		
+		// Draw entities
 		drawables = gameModelManager.getDrawables();
 		for(PhineasDrawable drawable : drawables)
 			drawable.draw(graphics);
+		
+		// Check graphics back in
 		gameView.checkinGraphics(graphics);
 	}
 
@@ -180,7 +188,7 @@ MouseMotionListener, MouseWheelListener
 	}
 
 	@Override
-	public void mousePressed(MouseEvent e)
+	public  void mousePressed(MouseEvent e)
 	{	
 		BoundableHelper helper = BoundableHelper.getInstance();
 		
