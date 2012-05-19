@@ -12,7 +12,7 @@ import org.phineas.core.PhineasPlaceable;
  * Simple 2D drawable image that can be used in Phineas
  * @author Sam Pottinger
  */
-public class PhineasSprite implements PhineasBoundable, PhineasPlaceable, PhineasDrawable
+public class PhineasSprite implements PhineasBoundable, PhineasPlaceable, PhineasDrawable, Cloneable
 {
 	private Image image;
 	private int depth;
@@ -71,7 +71,7 @@ public class PhineasSprite implements PhineasBoundable, PhineasPlaceable, Phinea
 	 *                 of a deeper depth will be drawn first)
 	 * @throws IOExecption
 	 */
-	public PhineasSprite(int newX, int newY, Image newImage, int newDepth) throws IOException
+	public PhineasSprite(int newX, int newY, Image newImage, int newDepth)
 	{
 		image = newImage;
 		depth = newDepth;
@@ -131,6 +131,12 @@ public class PhineasSprite implements PhineasBoundable, PhineasPlaceable, Phinea
 	public void setY(int newY)
 	{
 		y = newY;
+	}
+	
+	@Override
+	public PhineasSprite clone()
+	{
+		return new PhineasSprite(getX(), getY(), image, getDepth());
 	}
 
 	protected void setImage(Image newImage)
