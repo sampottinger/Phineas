@@ -7,7 +7,7 @@ import org.phineas.core.PhineasBoundable;
 import org.phineas.core.PhineasDrawable;
 
 /**
- * Simple graphical line that integreates into the Phineas game framework
+ * Simple graphical line that integrates into the Phineas game framework
  * @author Sam Pottinger
  */
 public class PhineasLine implements PhineasBoundable, PhineasDrawable
