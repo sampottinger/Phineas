@@ -47,6 +47,8 @@ public class PhineasSprite implements PhineasBoundable, PhineasPlaceable, Phinea
 	public PhineasSprite(int newX, int newY, String loc, int newDepth) throws IOException
 	{
 		image = PhineasSpriteLoader.getInstance().loadSprite(loc);
+		imageWidth = image.getWidth(null);
+		imageHeight = image.getHeight(null);
 		depth = newDepth;
 		x = newX;
 		y = newY;
@@ -59,6 +61,8 @@ public class PhineasSprite implements PhineasBoundable, PhineasPlaceable, Phinea
 	public PhineasSprite(int newX, int newY, Image newImage)
 	{
 		image = newImage;
+		imageWidth = image.getWidth(null);
+		imageHeight = image.getHeight(null);
 		depth = PhineasDrawable.DEFAULT_DEPTH;
 		x = newX;
 		y = newY;
@@ -74,6 +78,8 @@ public class PhineasSprite implements PhineasBoundable, PhineasPlaceable, Phinea
 	public PhineasSprite(int newX, int newY, Image newImage, int newDepth)
 	{
 		image = newImage;
+		imageWidth = image.getWidth(null);
+		imageHeight = image.getHeight(null);
 		depth = newDepth;
 		x = newX;
 		y = newY;
